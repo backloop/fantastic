@@ -1,177 +1,19 @@
 #include <assert.h>
 #include <limits.h>
 /*
-    Problem:
-    ========
-    The Supermicro X10slm-f motherboard fan controller is initially configured to support high speed
-    fans in the 800-25000 RPM range. Fans reporting RPM rates outside these limits will trigger the
-    fan controller to revive the fan and/or generate warnings with varying degrees of urgency.
+  fantastic: ATmega fan tachometer multiplier
 
-    IPMI can be used to reconfigure the fan controller to adjust its range to between 100-1600 RPM for low-RPM fans
-    like the Noctua F/P12 with ranges of 150-1500 RPM. But these fans aren't well supported as the motherboard
-    has a tendency to preriodically detect 0 RPM from fans that are spinning at less than 300 RPM. The fan controller
-    responds by running all fans at 100% duty until a valid response the the fans' tachometer signal is read. Then it
-    gradually spins down the fans, until reading 0 RPM again.
+  Purpose:
+  - Read the low-frequency tachometer signal from a Noctua PWM fan.
+  - Multiply measured tachometer frequency by 4.
+  - Re-generate a stable 50% tachometer waveform on OC1A (pin 9) for the motherboard.
 
-    $ while true; do ipmitool sensor | grep "FAN[2,4]"; sleep 1; done
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 200.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 200.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 200.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 0.000      | RPM        | nr    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 0.000      | RPM        | nr    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 1400.000   | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 1200.000   | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 1300.000   | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 1000.000   | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN4             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
-    FAN2             | 300.000    | RPM        | ok    | 0.000     | 0.000     | 100.000   | 1700.000  | 1800.000  | 1900.000
+  Why:
+  - Some server motherboards intermittently read 0 RPM for very low-speed fans.
+  - The multiplied tach signal moves effective RPM into a range with fewer false alarms.
 
-
-    IPMI CONFIGURATION (not sufficient):
-    ====================================
-    Use "ipmitool" from a Linux machine connected to the IPMI NIC or ipmitool on the actual machine itself through /dev/ipmi0
-    to edit the thresholds:
-
-    Edit sensor thresholds on a remote machine
-    $ ipmitool -H <ip address> -U ADMIN -P ADMIN  sensor thresh "FAN2" lower 0 0 100
-
-    Edit sensor thresholds on a local machine
-    $ ipmitool sensor thresh "FAN2" lower 0 0 100
-    Locating sensor record 'FAN2'...
-    Setting sensor "FAN2" Lower Non-Recoverable threshold to 0,000
-    Setting sensor "FAN2" Lower Critical threshold to 0,000
-    Setting sensor "FAN2" Lower Non-Critical threshold to 100,000
-
-    List IPMI sensor information
-    $ ipmitool sensor
-    CPU Temp         | 49,000     | degrees C  | ok    | 0,000     | 0,000     | 0,000     | 95,000    | 98,000    | 100,000
-    System Temp      | 33,000     | degrees C  | ok    | -9,000    | -7,000    | -5,000    | 80,000    | 85,000    | 90,000
-    Peripheral Temp  | 39,000     | degrees C  | ok    | -9,000    | -7,000    | -5,000    | 80,000    | 85,000    | 90,000
-    PCH Temp         | 54,000     | degrees C  | ok    | -11,000   | -8,000    | -5,000    | 90,000    | 95,000    | 100,000
-    P1-DIMMA1 Temp   | 32,000     | degrees C  | ok    | 1,000     | 2,000     | 4,000     | 80,000    | 85,000    | 90,000
-    P1-DIMMA2 Temp   | na         |            | na    | na        | na        | na        | na        | na        | na
-    P1-DIMMB1 Temp   | 31,000     | degrees C  | ok    | 1,000     | 2,000     | 4,000     | 80,000    | 85,000    | 90,000
-    P1-DIMMB2 Temp   | na         |            | na    | na        | na        | na        | na        | na        | na
-    FAN1             | 1000,000   | RPM        | ok    | 400,000   | 600,000   | 800,000   | 25300,000 | 25400,000 | 25500,000
-    FAN2             | 1100,000   | RPM        | ok    | 0,000     | 0,000     | 100,000   | 25300,000 | 25400,000 | 25500,000
-    FAN3             | na         |            | na    | na        | na        | na        | na        | na        | na
-    FAN4             | 200,000    | RPM        | ok    | 0,000     | 0,000     | 100,000   | 25300,000 | 25400,000 | 25500,000
-    FANA             | na         |            | na    | na        | na        | na        | na        | na        | na
-    Vcpu             | 1,836      | Volts      | ok    | 1,242     | 1,260     | 1,395     | 1,899     | 2,088     | 2,106
-    VDIMM            | 1,488      | Volts      | ok    | 1,092     | 1,119     | 1,200     | 1,641     | 1,722     | 1,749
-    12V              | 12,128     | Volts      | ok    | 10,144    | 10,272    | 10,784    | 12,960    | 13,280    | 13,408
-    5VCC             | 5,135      | Volts      | ok    | 4,244     | 4,487     | 4,730     | 5,378     | 5,540     | 5,594
-    3.3VCC           | 3,299      | Volts      | ok    | 2,789     | 2,823     | 2,959     | 3,554     | 3,656     | 3,690
-    VBAT             | 2,972      | Volts      | ok    | 2,384     | 2,496     | 2,580     | 3,476     | 3,588     | 3,672
-    5V Dual          | 5,000      | Volts      | ok    | 4,244     | 4,379     | 4,487     | 5,378     | 5,540     | 5,594
-    3.3V AUX         | 3,333      | Volts      | ok    | 2,789     | 2,891     | 2,959     | 3,554     | 3,656     | 3,690
-    1.2V BMC         | 1,269      | Volts      | ok    | 1,080     | 1,107     | 1,152     | 1,404     | 1,431     | 1,458
-    1.05V PCH        | 1,050      | Volts      | ok    | 0,870     | 0,897     | 0,942     | 1,194     | 1,221     | 1,248
-    Chassis Intru    | 0x1        | discrete   | 0x0100| na        | na        | na        | na        | na        | na
-
-
-    THE FINAL SOLUTION:
-    ===================
-    Create an ATmega-based inline frequency multiplier, that intercepts the fan tachometer signal and multiplies it by a factor of 4
-    so that when fed into the fan controller the lower limit fan RPM warnings are never triggered. Also reconfigure the fan controller
-    using IPMI for this adjusted RPM range.
-
-    This transforms the Noctua fan tachometer signal from 150-1500 RPM -> 600-6000 RPM, which the fran controller manages without issues.
-
-    $ ipmitool sensor thresh "FAN2" lower 300 400 500
-    Locating sensor record 'FAN2'...
-    Setting sensor "FAN2" Lower Non-Recoverable threshold to 300,000
-    Setting sensor "FAN2" Lower Critical threshold to 400,000
-    Setting sensor "FAN2" Lower Non-Critical threshold to 500,000
-
-    $ ipmitool sensor thresh "FAN2" upper 6500 6600 6700
-    Locating sensor record 'FAN2'...
-    Setting sensor "FAN2" Lower Non-Critical threshold to 6500,000
-    Setting sensor "FAN2" Lower Critical threshold to 6600,000
-    Setting sensor "FAN2" Lower Non-Recoverable threshold to 6700,000
-
-    $ while true; do ipmitool sensor | grep "FAN[2,4]"; sleep 1; done
-    FAN2             | 800.000    | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN4             | 1100.000   | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN2             | 800.000    | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN4             | 1100.000   | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN2             | 800.000    | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN4             | 1100.000   | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN2             | 800.000    | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN4             | 1100.000   | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN2             | 800.000    | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN4             | 1100.000   | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN2             | 800.000    | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-    FAN4             | 1100.000   | RPM        | ok    | 300.000   | 400.000   | 500.000   | 6500.000  | 6600.000  | 6700.000
-
-    FAN2 settles at 200 RPM originally which is 800 RPM when transformed
-    FAN4 settles at 275 RPM originally which is 1100 RPM when transformed.
-
-    Example serial output from the device:
-
-    Input :                 Freq (mHz): 9174        Freq (Hz): 9    RPM: 275            <- calculated input
-    Output:                 Freq (mHz): 36696       Freq (Hz): 37   RPM: 1100           <- calculated output
-
-    Input :                 Freq (mHz): 9174        Freq (Hz): 9    RPM: 275            <- calculating input, but no change
-    Input :                 Freq (mHz): 9174        Freq (Hz): 9    RPM: 275            <- and again without change
-    Input :                 Freq (mHz): 9174        Freq (Hz): 9    RPM: 275            <- and again without change
-    Input :                 Freq (mHz): 9091        Freq (Hz): 9    RPM: 273            <- input has now changed
-    Output:                 Freq (mHz): 36364       Freq (Hz): 36   RPM: 1092           <- new calculated output
-
-    Input :                 Freq (mHz): 9091        Freq (Hz): 9    RPM: 273            <- same input as before
-    Input :                 Freq (mHz): 9174        Freq (Hz): 9    RPM: 275            <- input changed
-    Output:                 Freq (mHz): 36696       Freq (Hz): 37   RPM: 1100           <- thus change output
-
-    Design goals:
-    =============
-
-    Input:
-    RPM: 0 - 2000
-    Freq, Hz: 0 - 33
-
-    Output: Some multiple of Input
-    RPM: 0 - 8000
-    Freq, Hz: 0 - 133
-
-
-    Lessons learned:
-    ================
-    * MOST IMPORTANT: Use a common ground if using different DC power supplies to power the ATmega (5V) and the fan (12V).
-      Without common ground the tachometer signal will behave very odd (irrespective of it being read with Atmega or an oscilloscope)
-    * Use an oscilloscope for verifying the input and output chracteristics of the signals without relying on functional code.
-    * Fan RPM control uses a 25kHz PWM signal which propagates into the ground/tachometer signal. Use an RC circuit to filter
-      the tachometer signal before reaching the ATmega input pin.
-    * Use a series resistor on the open-collect NPN transistor to limit current draw from base->emitter so that upper voltage level
-      can be kept at 5V.
-
-
-    Noctua fan details:
-    ===================
-
-    https://noctua.at/pub/media/wysiwyg/Noctua_PWM_specifications_white_paper.pdf
-
-    Measurements of Noctua F/P12 fans:
-    PWM duty       RPM
-    ==================
-        100%      1364
-         90%      1200
-         80%      1111
-         70%      1000
-         60%       882
-         50%       750
-         40%       588
-         30%       417
-         20%       291
-         10%       137
-          0%         0
+  See README.md for system background, IPMI threshold examples, measurements,
+  and hardware-level integration notes.
 */
 
 //
