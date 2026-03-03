@@ -33,6 +33,10 @@ With a `x4` multiplier, a real fan range of roughly `150-1500 RPM` appears as `6
 
 - Schematic PDF: [`media/schematics.pdf`](media/schematics.pdf)
 
+Schematic preview (page 1):
+
+![Fantastic schematic preview](media/schematics.png)
+
 3D board view:
 
 ![Fantastic board 3D view](media/3d-view.png)
