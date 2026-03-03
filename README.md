@@ -29,7 +29,7 @@ With a `x4` multiplier, a real fan range of roughly `150-1500 RPM` appears as `6
 
 ## Hardware Design Files
 
-> Warning: The schematic and PCB layout have not been verified in a physical build yet.
+> Warning: The documented KiCad schematic/PCB has not been validated in a physical PCB build yet. Current results are from the initial hand-built proto-board prototype.
 
 - Schematic PDF: [`media/schematics.pdf`](media/schematics.pdf)
 
