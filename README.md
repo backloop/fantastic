@@ -27,6 +27,16 @@ With a `x4` multiplier, a real fan range of roughly `150-1500 RPM` appears as `6
 
 - `fantastic.ino`: firmware for measurement, filtering, and output waveform generation.
 
+## Hardware Design Files
+
+> Warning: The schematic and PCB layout have not been verified in a physical build yet.
+
+- Schematic PDF: [`media/schematics.pdf`](media/schematics.pdf)
+
+3D board view:
+
+![Fantastic board 3D view](media/3d-view.png)
+
 ## Firmware Behavior
 
 The sketch:
