@@ -1,0 +1,25 @@
+*.swp
+
+# KiCad cache files
+kicad/fp-info-cache
+kicad/*.kicad_prl
+kicad/*.kicad_pro-bak
+
+# Autosave files
+kicad/*_autosave-*
+kicad/*.tmp
+kicad/*.kicad_pcb.lck
+kicad/*.kicad_sch.lck
+
+# 3D cache
+kicad/*.step-bak
+
+# Fabrication outputs
+kicad/*.zip
+kicad/*.gbr
+kicad/*.drl
+kicad/*.pdf
+kicad/*.step
+
+# KiCad backups
+kicad/*-backups/
