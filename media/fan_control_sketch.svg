@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 800 380" width="800" height="380" style="background:#faf9f5;">
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&amp;display=swap');
+      text { font-family: 'Caveat', cursive; }
+    </style>
+    <filter id="pencil">
+      <feTurbulence type="turbulence" baseFrequency="0.065" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5"/>
+    </filter>
+  </defs>
+
+  <!-- Faint ruled lines like notebook paper -->
+  <line x1="0" y1="60" x2="800" y2="60" stroke="#dde8f0" stroke-width="0.6"/>
+  <line x1="0" y1="100" x2="800" y2="100" stroke="#dde8f0" stroke-width="0.6"/>
+  <line x1="0" y1="140" x2="800" y2="140" stroke="#dde8f0" stroke-width="0.6"/>
+  <line x1="0" y1="180" x2="800" y2="180" stroke="#dde8f0" stroke-width="0.6"/>
+  <line x1="0" y1="220" x2="800" y2="220" stroke="#dde8f0" stroke-width="0.6"/>
+  <line x1="0" y1="260" x2="800" y2="260" stroke="#dde8f0" stroke-width="0.6"/>
+  <!-- Margin line -->
+  <line x1="48" y1="0" x2="48" y2="320" stroke="#f0c0c0" stroke-width="1"/>
+
+  <!-- BLOCK 1: Supermicro NAS -->
+  <path d="M72,110 Q74,108 160,109 Q163,110 162,200 Q160,202 72,201 Q70,200 71,110" fill="#fff" stroke="#2a2a2a" stroke-width="2.2" filter="url(#pencil)" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M162,112 Q168,115 167,202 Q165,205 162,202" fill="none" stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+  <path d="M73,201 Q76,207 167,206 Q168,205 167,202" fill="none" stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+  <text x="116" y="155" text-anchor="middle" font-size="16" fill="#1a1a1a" font-weight="700">Supermicro</text>
+  <text x="116" y="175" text-anchor="middle" font-size="14" fill="#444">NAS</text>
+
+  <!-- WIRES: NAS to Arduino -->
+  <path d="M163,135 Q230,133 282,136" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" filter="url(#pencil)"/>
+  <polygon points="282,136 273,131 273,141" fill="#c0392b"/>
+  <text x="222" y="126" text-anchor="middle" font-size="13" fill="#c0392b">+5V</text>
+
+  <path d="M163,156 Q230,154 282,157" fill="none" stroke="#2c3e50" stroke-width="2" stroke-linecap="round" filter="url(#pencil)"/>
+  <polygon points="282,157 273,152 273,162" fill="#2c3e50"/>
+  <text x="222" y="150" text-anchor="middle" font-size="13" fill="#2c3e50">PWM</text>
+
+  <path d="M282,178 Q230,177 163,178" fill="none" stroke="#27ae60" stroke-width="2" stroke-dasharray="6,4" stroke-linecap="round" filter="url(#pencil)"/>
+  <polygon points="163,178 172,173 172,183" fill="#27ae60"/>
+  <text x="222" y="194" text-anchor="middle" font-size="13" fill="#27ae60">4x TACHO</text>
+  <!-- Green checkmark under 4xTACHO (NAS to Arduino) -->
+  <path d="M213,203 L219,211 L232,199" fill="none" stroke="#27ae60" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- BLOCK 2: Arduino Nano -->
+  <path d="M282,110 Q284,108 400,109 Q403,110 402,200 Q400,202 282,201 Q280,200 281,110" fill="#fff" stroke="#2a2a2a" stroke-width="2.2" filter="url(#pencil)" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M402,112 Q408,115 407,202 Q405,205 402,202" fill="none" stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+  <path d="M283,201 Q286,207 407,206 Q408,205 407,202" fill="none" stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+  <text x="342" y="155" text-anchor="middle" font-size="16" fill="#1a1a1a" font-weight="700">Arduino</text>
+  <text x="342" y="175" text-anchor="middle" font-size="14" fill="#444">Nano</text>
+
+  <!-- WIRES: Arduino to Fan -->
+  <path d="M403,145 Q465,143 518,146" fill="none" stroke="#2c3e50" stroke-width="2" stroke-linecap="round" filter="url(#pencil)"/>
+  <polygon points="518,146 509,141 509,151" fill="#2c3e50"/>
+  <text x="460" y="138" text-anchor="middle" font-size="13" fill="#2c3e50">PWM</text>
+
+  <path d="M518,168 Q465,167 403,168" fill="none" stroke="#27ae60" stroke-width="2" stroke-dasharray="6,4" stroke-linecap="round" filter="url(#pencil)"/>
+  <polygon points="403,168 412,163 412,173" fill="#27ae60"/>
+  <text x="460" y="185" text-anchor="middle" font-size="13" fill="#27ae60">TACHO</text>
+  <!-- Red cross under TACHO (Arduino to Fan) -->
+  <line x1="453" y1="193" x2="467" y2="207" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="467" y1="193" x2="453" y2="207" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- BLOCK 3: Fan -->
+  <circle cx="578" cy="155" r="58" fill="#fff" stroke="#2a2a2a" stroke-width="2.2" filter="url(#pencil)"/>
+  <ellipse cx="578" cy="115" rx="12" ry="26" fill="rgba(200,210,220,0.4)" stroke="#2a2a2a" stroke-width="1.6" filter="url(#pencil)" transform="rotate(10 578 155)"/>
+  <ellipse cx="578" cy="115" rx="12" ry="26" fill="rgba(200,210,220,0.4)" stroke="#2a2a2a" stroke-width="1.6" filter="url(#pencil)" transform="rotate(130 578 155)"/>
+  <ellipse cx="578" cy="115" rx="12" ry="26" fill="rgba(200,210,220,0.4)" stroke="#2a2a2a" stroke-width="1.6" filter="url(#pencil)" transform="rotate(250 578 155)"/>
+  <circle cx="578" cy="155" r="9" fill="#ddd" stroke="#2a2a2a" stroke-width="1.8" filter="url(#pencil)"/>
+  <text x="578" y="247" text-anchor="middle" font-size="16" fill="#1a1a1a" font-weight="700">Fan</text>
+  <text x="578" y="265" text-anchor="middle" font-size="13" fill="#555">4-pin PWM</text>
+
+  <!-- Rotation arrow -->
+  <path d="M600,128 Q622,138 620,158 Q618,175 604,183" fill="none" stroke="#888" stroke-width="1.4" stroke-dasharray="3,2" stroke-linecap="round"/>
+  <polygon points="604,183 594,190 600,178" fill="#888"/>
+
+  <!-- Title -->
+  <text x="400" y="36" text-anchor="middle" font-size="21" fill="#2a2a2a" font-weight="700" letter-spacing="1">Fan Tachometer Multiplicator</text>
+  <path d="M255,43 Q400,46 545,43" fill="none" stroke="#2a2a2a" stroke-width="1.2" stroke-linecap="round" filter="url(#pencil)"/>
+
+  <!-- Legend -->
+  <line x1="60" y1="284" x2="82" y2="284" stroke="#c0392b" stroke-width="2"/>
+  <text x="86" y="290" font-size="13" fill="#c0392b">+5V</text>
+  <line x1="115" y1="284" x2="137" y2="284" stroke="#2c3e50" stroke-width="2"/>
+  <text x="141" y="290" font-size="13" fill="#2c3e50">PWM</text>
+  <line x1="178" y1="284" x2="200" y2="284" stroke="#27ae60" stroke-width="2" stroke-dasharray="4,3"/>
+  <text x="204" y="290" font-size="13" fill="#27ae60">TACHO (feedback)</text>
+
+  <!-- Red cross legend -->
+  <line x1="63" y1="310" x2="73" y2="320" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="73" y1="310" x2="63" y2="320" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="82" y="320" font-size="12" fill="#e74c3c">Too low tacho signal for motherboard fan controller compliance</text>
+
+  <!-- Green checkmark legend -->
+  <path d="M62,344 L68,352 L80,338" fill="none" stroke="#27ae60" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="88" y="350" font-size="12" fill="#27ae60">Tacho signal within motherboard fan controller range</text>
+
+</svg>

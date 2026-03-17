@@ -2,6 +2,8 @@
 
 ATmega-based inline fan tachometer frequency multiplier for low-RPM PWM fans on motherboards that expect higher tachometer rates.
 
+![Fan control sketch](media/fan_control_sketch.svg)
+
 ## Problem Background
 
 The target motherboard (Supermicro X10SLM-F) fan controller is designed for high-speed fans and tends to report low-RPM Noctua fans as `0 RPM` intermittently, especially below ~300 RPM.
